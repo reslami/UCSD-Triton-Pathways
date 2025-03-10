@@ -49,7 +49,6 @@ A web platform for tracking and managing micromobility incidents on the UCSD cam
 
 4. Initialize the database:
    ```bash
-   python init_db.py
    flask db upgrade
    ```
 
@@ -85,18 +84,18 @@ flake8    # Lint code
 
 The application uses SQLite for data storage. The database file is located at `instance/app.db`.
 
-To reset the database:
-1. Delete the `instance/app.db` file
-2. Run `python init_db.py`
-3. Run `flask db upgrade`
+To reset or initialize the database:
+1. Delete the `instance/app.db` file (if it exists)
+2. Run `flask db upgrade` to create tables using migrations
 
-## Default Admin Account
+For database schema changes:
+1. Make your model changes
+2. Run `flask db migrate -m "Description of changes"`
+3. Run `flask db upgrade` to apply the changes
 
-After initializing the database, you can log in with:
-- Email: admin@example.com
-- Password: change-this-password-immediately
+## Creating an Admin Account
 
-**IMPORTANT**: Change the admin password immediately after first login.
+When registering the first user in the system, select the "Admin" role in the registration form. This account will have administrative privileges for the application.
 
 ## License
 
