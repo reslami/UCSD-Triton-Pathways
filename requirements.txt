@@ -1,0 +1,28 @@
+# Flask and Extensions
+Flask==3.0.2
+Flask-Login==0.6.3
+Flask-Migrate==4.0.5
+Flask-SQLAlchemy==3.1.1
+Flask-WTF==1.2.1
+Werkzeug==3.0.1
+WTForms==3.2.1
+
+# Database
+SQLAlchemy==2.0.38
+alembic==1.15.1
+
+# Security and Forms
+email-validator==2.1.0.post1
+python-dotenv==1.0.1
+
+# Utilities
+click==8.1.8
+itsdangerous==2.2.0
+Jinja2==3.1.5
+MarkupSafe==3.0.2
+
+# Dev Dependencies
+pytest==7.4.4
+coverage==7.4.1
+black==24.2.0
+flake8==7.0.0

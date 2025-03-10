@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row py-5">
+    <div class="col-lg-8 offset-lg-2 text-center">
+        <h1 class="display-3 fw-bold mb-3 gradient-text" data-aos="fade-up">Triton Pathways</h1>
+        <p class="lead mb-5" data-aos="fade-up" data-aos-delay="100">
+            Help make UCSD's campus safer by reporting micromobility incidents and hazards.
+            Together, we can identify problem areas and improve safety for everyone.
+        </p>
+        {% if current_user.is_authenticated %}
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center" data-aos="fade-up" data-aos-delay="200">
+            <a href="{{ url_for('incidents.report') }}" class="btn btn-danger btn-lg">
+                <i class="bi bi-plus-circle me-2"></i>Report an Incident
+            </a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-grid me-2"></i>View Dashboard
+            </a>
+        </div>
+        {% else %}
+        <div class="d-grid gap-3 d-sm-flex justify-content-sm-center" data-aos="fade-up" data-aos-delay="200">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Get Started</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-outline-secondary btn-lg">Sign In</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-5 pt-4">
+    <div class="col-12 text-center mb-5">
+        <h2 class="fw-bold mb-2" data-aos="fade-up">How It Works</h2>
+        <p class="text-muted" data-aos="fade-up" data-aos-delay="50">Our platform makes campus safety accessible for everyone</p>
+    </div>
+    <div class="col-md-4 mb-4 mb-md-0 px-4" data-aos="fade-up" data-aos-delay="100">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body p-4 text-center">
+                <div class="icon-wrapper mb-4">
+                    <i class="bi bi-clipboard-plus fs-1 text-primary"></i>
+                </div>
+                <h5 class="card-title mb-3">Report Incidents</h5>
+                <p class="card-text">Submit detailed reports about safety incidents involving e-scooters, bikes, and other micromobility devices on campus.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4 mb-md-0 px-4" data-aos="fade-up" data-aos-delay="200">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body p-4 text-center">
+                <div class="icon-wrapper mb-4">
+                    <i class="bi bi-map fs-1 text-primary"></i>
+                </div>
+                <h5 class="card-title mb-3">Interactive Map</h5>
+                <p class="card-text">View incident locations on an interactive map to identify areas that need attention or should be avoided.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4 mb-md-0 px-4" data-aos="fade-up" data-aos-delay="300">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body p-4 text-center">
+                <div class="icon-wrapper mb-4">
+                    <i class="bi bi-graph-up fs-1 text-primary"></i>
+                </div>
+                <h5 class="card-title mb-3">Track Progress</h5>
+                <p class="card-text">Monitor the status of reported incidents and see how the campus community is working to improve safety.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5 pt-5">
+    <div class="col-lg-10 offset-lg-1">
+        <div class="card" data-aos="fade-up">
+            <div class="card-body p-5 text-center">
+                <h3 class="fw-bold mb-4">Make UCSD's Campus Safer</h3>
+                <p class="mb-4">Join our growing community of students and staff committed to improving safety for everyone.</p>
+                {% if not current_user.is_authenticated %}
+                <a href="{{ url_for('auth.register') }}" class="btn btn-primary">Register Now</a>
+                {% else %}
+                <a href="{{ url_for('incidents.report') }}" class="btn btn-danger">Report an Incident</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

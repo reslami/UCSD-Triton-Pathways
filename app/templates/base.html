@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <title>{{ title }} - Triton Pathways</title>
+    <!-- Critical CSS for theme transition -->
+    <style>
+        :root[data-bs-theme="dark"] {
+            color-scheme: dark;
+        }
+        
+        :root[data-bs-theme="dark"] body {
+            background-color: #121212;
+            color: #f8f9fa;
+        }
+        
+        /* Ensure no white flash during page transitions */
+        .dark-theme {
+            background-color: #121212;
+        }
+    </style>
+    <!-- Prevent Flash of Wrong Theme (FOWT) -->
+    <script>
+        // Immediately apply the saved theme or system preference before page renders
+        (function() {
+            function getInitialTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    return savedTheme;
+                }
+                return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            
+            const initialTheme = getInitialTheme();
+            document.documentElement.setAttribute('data-bs-theme', initialTheme);
+            
+            // Add a class to body for additional theme-specific styling
+            if (initialTheme === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- AOS Animation -->
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <style>
+        :root {
+            --bs-body-bg: #fff;
+            --bs-body-color: #212529;
+            --bs-dark: #212529;
+            --bs-light: #f8f9fa;
+            --bs-dark-bg-subtle: #343a40;
+            --bs-primary: #0466c8;
+            --bs-secondary: #6c757d;
+            --bs-success: #0db39e;
+            --bs-danger: #ef476f;
+            --bs-warning: #ffd166;
+            --bs-info: #118ab2;
+            --bs-body-font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --header-gradient-light: linear-gradient(90deg, #000, #333);
+            --header-gradient-dark: linear-gradient(90deg, #fff, #aaa);
+            --bg-gradient-light: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.05), 0 6px 6px rgba(0, 0, 0, 0.02);
+            --transition-normal: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        body {
+            background: var(--bg-gradient-light);
+            background-attachment: fixed;
+            color: var(--bs-body-color);
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+            font-family: var(--bs-body-font-family);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            line-height: 1.7;
+        }
+
+        h1, h2, h3, h4, h5, h6,
+        .h1, .h2, .h3, .h4, .h5, .h6 {
+            font-family: var(--bs-body-font-family);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            line-height: 1.2;
+        }
+
+        .gradient-text {
+            background: var(--header-gradient-light);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-family: var(--bs-body-font-family);
+            font-weight: 800;
+            letter-spacing: -0.05em;
+            text-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            font-size: 1.4rem;
+        }
+
+        .content {
+            margin-top: 5rem;
+            padding-bottom: 4rem;
+        }
+
+        .lead {
+            font-weight: 400;
+            line-height: 1.6;
+            font-size: 1.2rem;
+        }
+
+        #map {
+            height: 400px;
+            width: 100%;
+            margin-bottom: 1.5rem;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+
+        .card {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            transition: var(--transition-normal);
+            overflow: hidden;
+        }
+
+        /* Only apply hover effects to cards that don't contain forms */
+        .card:not(.card-form):hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.07), 0 10px 10px rgba(0, 0, 0, 0.03);
+        }
+
+        /* Card with forms should remain stable */
+        .card-form {
+            transition: none;
+        }
+
+        .card-header {
+            background-color: transparent;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            padding: 1.5rem 1.5rem 1rem;
+        }
+
+        .card-body {
+            padding: 1.5rem;
+        }
+
+        /* Form controls should be stable */
+        .form-control, .form-select {
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+            border-radius: 8px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 0.75rem 1rem;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(4, 102, 200, 0.25);
+        }
+
+        /* Dark mode form controls */
+        [data-bs-theme="dark"] .form-control,
+        [data-bs-theme="dark"] .form-select {
+            background-color: rgba(30, 30, 30, 0.8);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: var(--bs-body-color);
+        }
+
+        [data-bs-theme="dark"] .form-control:focus,
+        [data-bs-theme="dark"] .form-select:focus {
+            border-color: var(--bs-primary);
+            box-shadow: 0 0 0 0.25rem rgba(4, 102, 200, 0.25);
+        }
+
+        .alert {
+            background-color: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: none;
+            border-radius: 12px;
+            box-shadow: var(--card-shadow);
+            margin-bottom: 1.5rem;
+            padding: 1rem 1.5rem;
+        }
+
+        .navbar {
+            background: rgba(255, 255, 255, 0.9) !important;
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+            padding: 0.75rem 0;
+            transition: var(--transition-normal);
+            z-index: 1030;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .navbar-dark .nav-link, 
+        .navbar-dark .navbar-brand {
+            color: var(--bs-body-color) !important;
+        }
+
+        .nav-link {
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            transition: var(--transition-normal);
+            border-radius: 8px;
+        }
+
+        .nav-link:hover {
+            color: var(--bs-primary) !important;
+            background-color: rgba(4, 102, 200, 0.05);
+        }
+
+        .theme-toggle {
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition-normal);
+            color: var(--bs-body-color);
+        }
+
+        .theme-toggle:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            transform: rotate(15deg);
+        }
+
+        /* Dark Mode Styles */
+        [data-bs-theme="dark"] {
+            --bs-body-bg: #121212;
+            --bs-body-color: #f8f9fa;
+            --header-gradient-light: linear-gradient(90deg, #fff, #aaa);
+            --bg-gradient-light: linear-gradient(135deg, #121212 0%, #1e1e1e 100%);
+            --card-shadow: 0 10px 20px rgba(0, 0, 0, 0.25), 0 6px 6px rgba(0, 0, 0, 0.22);
+        }
+
+        [data-bs-theme="dark"] body {
+            background: var(--bg-gradient-light);
+        }
+
+        [data-bs-theme="dark"] .card {
+            background-color: rgba(30, 30, 30, 0.95);
+        }
+
+        [data-bs-theme="dark"] .alert {
+            background-color: rgba(30, 30, 30, 0.95);
+        }
+
+        [data-bs-theme="dark"] .table {
+            --bs-table-bg: var(--bs-dark-bg-subtle);
+            --bs-table-color: var(--bs-light);
+        }
+
+        [data-bs-theme="dark"] .leaflet-tile {
+            filter: brightness(0.6) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+        }
+
+        [data-bs-theme="dark"] .leaflet-container {
+            background: #303030;
+        }
+
+        [data-bs-theme="dark"] .navbar {
+            background: rgba(18, 18, 18, 0.9) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        [data-bs-theme="dark"] .theme-toggle:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-bs-theme="dark"] .gradient-text {
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+        }
+
+        [data-bs-theme="dark"] .nav-link:hover {
+            background-color: rgba(4, 102, 200, 0.1);
+        }
+
+        /* Button Styles */
+        .btn {
+            padding: 0.75rem 2rem;
+            border-radius: 8px;
+            transition: var(--transition-normal);
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            position: relative;
+            overflow: hidden;
+            border: none;
+        }
+
+        .btn::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            background-image: radial-gradient(circle, #fff 10%, transparent 10.01%);
+            background-repeat: no-repeat;
+            background-position: 50%;
+            transform: scale(10, 10);
+            opacity: 0;
+            transition: transform 0.4s, opacity 0.8s;
+        }
+
+        .btn:active::after {
+            transform: scale(0, 0);
+            opacity: 0.3;
+            transition: 0s;
+        }
+
+        .btn-lg {
+            padding: 1rem 2.5rem;
+            font-size: 1.1rem;
+        }
+
+        /* Primary Button */
+        .btn-primary {
+            background-color: var(--bs-primary);
+            color: white;
+            box-shadow: 0 4px 6px rgba(4, 102, 200, 0.11), 0 1px 3px rgba(4, 102, 200, 0.08);
+        }
+
+        .btn-primary:hover, .btn-primary:focus {
+            background-color: #0355a8;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(4, 102, 200, 0.18), 0 3px 6px rgba(4, 102, 200, 0.12);
+        }
+
+        /* Danger Button */
+        .btn-danger {
+            background-color: var(--bs-danger);
+            color: white;
+            box-shadow: 0 4px 6px rgba(239, 71, 111, 0.11), 0 1px 3px rgba(239, 71, 111, 0.08);
+        }
+
+        .btn-danger:hover, .btn-danger:focus {
+            background-color: #e42f5d;
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(239, 71, 111, 0.18), 0 3px 6px rgba(239, 71, 111, 0.12);
+        }
+
+        /* Outline Primary Button */
+        .btn-outline-primary {
+            background-color: transparent;
+            border: 2px solid var(--bs-primary);
+            color: var(--bs-primary);
+        }
+
+        .btn-outline-primary:hover, .btn-outline-primary:focus {
+            background-color: rgba(4, 102, 200, 0.05);
+            color: var(--bs-primary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(4, 102, 200, 0.1);
+        }
+
+        /* Outline Secondary Button */
+        .btn-outline-secondary {
+            background-color: transparent;
+            border: 2px solid var(--bs-secondary);
+            color: var(--bs-secondary);
+        }
+
+        .btn-outline-secondary:hover, .btn-outline-secondary:focus {
+            background-color: rgba(108, 117, 125, 0.05);
+            color: var(--bs-secondary);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(108, 117, 125, 0.1);
+        }
+
+        /* Outline Danger Button */
+        .btn-outline-danger {
+            background-color: transparent;
+            border: 2px solid var(--bs-danger);
+            color: var(--bs-danger);
+        }
+
+        .btn-outline-danger:hover, .btn-outline-danger:focus {
+            background-color: rgba(239, 71, 111, 0.05);
+            color: var(--bs-danger);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(239, 71, 111, 0.1);
+        }
+
+        /* Table Styles */
+        .table {
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 0;
+        }
+
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            padding: 1rem;
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .table td {
+            padding: 1rem;
+            vertical-align: middle;
+        }
+
+        /* Badge Styles */
+        .badge {
+            font-weight: 500;
+            padding: 0.5em 0.75em;
+            border-radius: 6px;
+        }
+
+        /* Dark Mode Button Styles */
+        [data-bs-theme="dark"] .btn-outline-primary,
+        [data-bs-theme="dark"] .btn-outline-secondary,
+        [data-bs-theme="dark"] .btn-outline-danger {
+            border-width: 2px;
+        }
+
+        [data-bs-theme="dark"] .btn-outline-primary:hover, 
+        [data-bs-theme="dark"] .btn-outline-primary:focus {
+            background-color: rgba(4, 102, 200, 0.1);
+        }
+
+        [data-bs-theme="dark"] .btn-outline-secondary:hover,
+        [data-bs-theme="dark"] .btn-outline-secondary:focus {
+            background-color: rgba(108, 117, 125, 0.1);
+        }
+
+        [data-bs-theme="dark"] .btn-outline-danger:hover,
+        [data-bs-theme="dark"] .btn-outline-danger:focus {
+            background-color: rgba(239, 71, 111, 0.1);
+        }
+
+        /* Small Screen Adjustments */
+        @media (max-width: 576px) {
+            .btn {
+                padding: 0.6rem 1.5rem;
+            }
+
+            .btn.w-100 {
+                padding: 0.7rem 1.5rem;
+            }
+
+            .table .btn {
+                padding: 0.3rem 0.8rem;
+                font-size: 0.875rem;
+            }
+
+            .btn-group .btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Hamburger Menu Icon Styles */
+        .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+
+        [data-bs-theme="dark"] .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.75%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+        }
+
+        .navbar-toggler {
+            border-color: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-bs-theme="dark"] .navbar-toggler {
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+    </style>
+    {% block styles %}{% endblock %}
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark shadow-sm fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">Triton Pathways</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('incidents.report') }}">Report Incident</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <ul class="navbar-nav d-flex align-items-center">
+                    <li class="nav-item me-2">
+                        <div class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+                            <i class="bi bi-sun-fill" id="themeIcon"></i>
+                        </div>
+                    </li>
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item">
+                        <a class="nav-link d-flex align-items-center" href="{{ url_for('auth.account') }}">
+                            <i class="bi bi-person-circle me-2"></i>{{ current_user.username }}
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.logout') }}">Logout</a>
+                    </li>
+                    {% else %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('auth.login') }}">Login</a>
+                    </li>
+                    <li class="nav-item ms-2">
+                        <a class="btn btn-primary" href="{{ url_for('auth.register') }}">Register</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- AOS Animation -->
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize AOS animations
+            AOS.init({
+                duration: 800,
+                easing: 'ease-out',
+                once: true
+            });
+            
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('themeToggle');
+            const themeIcon = document.getElementById('themeIcon');
+            const html = document.documentElement;
+            const systemDarkMode = window.matchMedia('(prefers-color-scheme: dark)');
+            
+            function getCurrentTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                if (savedTheme) {
+                    return savedTheme;
+                }
+                return systemDarkMode.matches ? 'dark' : 'light';
+            }
+            
+            function updateTheme(theme) {
+                html.setAttribute('data-bs-theme', theme);
+                themeIcon.className = theme === 'dark' ? 'bi bi-moon-fill' : 'bi bi-sun-fill';
+                
+                // Update dark-theme class
+                if (theme === 'dark') {
+                    html.classList.add('dark-theme');
+                } else {
+                    html.classList.remove('dark-theme');
+                }
+            }
+            
+            function setAndSaveTheme(theme) {
+                updateTheme(theme);
+                localStorage.setItem('theme', theme);
+            }
+            
+            // Initialize theme
+            const currentTheme = getCurrentTheme();
+            updateTheme(currentTheme);
+            
+            // Toggle theme
+            themeToggle.addEventListener('click', () => {
+                const newTheme = html.getAttribute('data-bs-theme') === 'light' ? 'dark' : 'light';
+                setAndSaveTheme(newTheme);
+            });
+            
+            // Update on system changes
+            systemDarkMode.addEventListener('change', (e) => {
+                if (!localStorage.getItem('theme')) {
+                    updateTheme(e.matches ? 'dark' : 'light');
+                }
+            });
+        });
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html> 

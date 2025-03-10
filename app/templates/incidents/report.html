@@ -1,0 +1,245 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2">
+        <div class="card card-form">
+            <div class="card-header">
+                <h4 class="mb-0">Report an Incident</h4>
+            </div>
+            <div class="card-body">
+                <div id="map" class="mb-4"></div>
+                
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {{ form.hidden_tag() }}
+                    
+                    <!-- Location section -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.location.label(class="form-label") }}
+                            {{ form.location(class="form-control", placeholder="e.g., Near Geisel Library") }}
+                            <small class="text-muted">Tap the map to set coordinates</small>
+                            <div id="map-error" class="text-danger" style="display: none;"></div>
+                            <!-- Only show server-side errors if they're not about the field being required -->
+                            {% for error in form.location.errors %}
+                                {% if "required" not in error|lower %}
+                                <span class="text-danger">{{ error }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Hidden coordinate fields -->
+                    <div class="row" style="display: none;">
+                        <div class="col-md-6">
+                            {{ form.latitude(class="form-control", readonly=true) }}
+                            {% for error in form.latitude.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            {{ form.longitude(class="form-control", readonly=true) }}
+                            {% for error in form.longitude.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Date and Incident Type -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.date.label(class="form-label") }}
+                            {{ form.date(class="form-control", type="datetime-local") }}
+                            <small class="text-muted">Auto-filled with current time</small>
+                            {% for error in form.date.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.incident_type.label(class="form-label") }}
+                            {{ form.incident_type(class="form-select") }}
+                            {% for error in form.incident_type.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Vehicle Type and Weather -->
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.vehicle_type.label(class="form-label") }}
+                            {{ form.vehicle_type(class="form-select") }}
+                            {% for error in form.vehicle_type.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.weather.label(class="form-label") }}
+                            {{ form.weather(class="form-select") }}
+                            {% for error in form.weather.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.description.label(class="form-label") }}
+                            {{ form.description(class="form-control", rows=3, placeholder="Optional: Provide any additional details about the incident") }}
+                            {% for error in form.description.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Photo upload -->
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            {{ form.photo.label(class="form-label") }}
+                            {{ form.photo(class="form-control") }}
+                            {% for error in form.photo.errors %}
+                            <span class="text-danger">{{ error }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Submit buttons -->
+                    <div class="text-end">
+                        <div class="d-flex gap-2 justify-content-end">
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-outline-primary">
+                                <i class="bi bi-arrow-left me-2"></i>Cancel
+                            </a>
+                            {{ form.submit(class="btn btn-primary") }}
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize the map centered on UCSD
+    var map = L.map('map').setView([32.8801, -117.2340], 15);
+    var marker = null;
+
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Define UCSD campus boundaries
+    var ucsdBounds = {
+        north: 32.8920,
+        south: 32.8680,
+        east: -117.2100,
+        west: -117.2480
+    };
+
+    // Create a rectangle showing UCSD campus boundaries
+    var boundaryRectangle = L.rectangle([
+        [ucsdBounds.north, ucsdBounds.west],
+        [ucsdBounds.south, ucsdBounds.east]
+    ], {
+        color: "#e0e0e0", // Very light gray color
+        weight: 1,        // Thinner line
+        fillOpacity: 0,   // No fill
+        dashArray: '5,5'  // Dashed line for subtlety
+    }).addTo(map);
+
+    // Function to check if a point is within UCSD boundaries
+    function isWithinUCSDCampus(lat, lng) {
+        return (
+            lat >= ucsdBounds.south && 
+            lat <= ucsdBounds.north && 
+            lng >= ucsdBounds.west && 
+            lng <= ucsdBounds.east
+        );
+    }
+
+    // Handle map clicks to set location
+    map.on('click', function(e) {
+        var lat = e.latlng.lat;
+        var lng = e.latlng.lng;
+
+        // Check if the clicked location is within UCSD campus
+        if (!isWithinUCSDCampus(lat, lng)) {
+            // Remove any existing error messages first
+            var existingErrors = document.querySelectorAll('.alert-danger');
+            existingErrors.forEach(function(error) {
+                error.remove();
+            });
+            
+            // Show error message
+            var errorMsg = document.createElement('div');
+            errorMsg.className = 'alert alert-danger alert-dismissible fade show';
+            errorMsg.innerHTML = 
+                '<strong>Invalid Location!</strong> Please select a location within the UCSD campus boundary.' +
+                '<button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>';
+            
+            // Insert error message at the top of the form
+            var form = document.querySelector('form');
+            form.insertBefore(errorMsg, form.firstChild);
+            
+            return;
+        }
+
+        // Remove any existing error messages
+        var existingErrors = document.querySelectorAll('.alert-danger');
+        existingErrors.forEach(function(error) {
+            error.remove();
+        });
+
+        // Update marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        marker = L.marker(e.latlng).addTo(map);
+        
+        // Update form fields
+        document.getElementById('latitude').value = lat.toFixed(6);
+        document.getElementById('longitude').value = lng.toFixed(6);
+        
+        // Hide the map error message
+        document.getElementById('map-error').style.display = 'none';
+    });
+
+    // Add form submission validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        var latField = document.getElementById('latitude');
+        var lngField = document.getElementById('longitude');
+        
+        if (!latField.value || !lngField.value) {
+            e.preventDefault(); // Prevent form submission
+            
+            // Show the map error message
+            var mapError = document.getElementById('map-error');
+            mapError.textContent = "This field is required. Place a pin on the map.";
+            mapError.style.display = 'block';
+            
+            // Scroll to the location field
+            document.getElementById('map').scrollIntoView({ behavior: 'smooth' });
+        } else {
+            // Hide the error message if coordinates are set
+            document.getElementById('map-error').style.display = 'none';
+        }
+    });
+
+    // Set current date and time as default
+    document.addEventListener('DOMContentLoaded', function() {
+        var now = new Date();
+        var year = now.getFullYear();
+        var month = String(now.getMonth() + 1).padStart(2, '0');
+        var day = String(now.getDate()).padStart(2, '0');
+        var hours = String(now.getHours()).padStart(2, '0');
+        var minutes = String(now.getMinutes()).padStart(2, '0');
+        
+        var defaultDateTime = `${year}-${month}-${day}T${hours}:${minutes}`;
+        document.querySelector('input[type="datetime-local"]').value = defaultDateTime;
+    });
+</script>
+{% endblock %} 
