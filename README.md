@@ -58,20 +58,6 @@ A web platform for tracking and managing micromobility incidents on the UCSD cam
    ```
    The application will be available at http://localhost:5000
 
-## Testing
-
-Run tests with pytest:
-```bash
-pytest
-```
-
-For test coverage report:
-```bash
-coverage run -m pytest
-coverage report
-coverage html  # For detailed HTML report
-```
-
 ## Database Management
 
 The application uses SQLite for data storage. The database file is located at `instance/app.db`.
@@ -95,6 +81,10 @@ This project is licensed under the Creative Commons Attribution-NonCommercial-Sh
 
 ## Acknowledgments
 
-- UCSD Transportation Services for inspiration
-- OpenStreetMap for map data
-- Bootstrap Icons for the icon set 
+- UCSD Transportation Services for inspiration and data on campus mobility patterns
+- OpenStreetMap for providing map data
+- Leaflet.js for the interactive mapping library
+- Bootstrap Icons for the comprehensive icon set
+- The Flask framework and its extensions for web application development
+- SQLAlchemy and Flask-Migrate for database management
+- The open source community for inspiration and tools that made this project possible 
