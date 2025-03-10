@@ -72,14 +72,6 @@ coverage report
 coverage html  # For detailed HTML report
 ```
 
-## Code Quality
-
-Maintain code quality by running:
-```bash
-black .  # Format code
-flake8    # Lint code
-```
-
 ## Database Management
 
 The application uses SQLite for data storage. The database file is located at `instance/app.db`.
