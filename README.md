@@ -1,6 +1,6 @@
 # Triton Pathways
 
-A web platform for tracking and managing micromobility incidents on the UCSD campus. This application helps identify safety trends and areas needing attention to improve campus mobility safety.
+![Micromobility Reporting Platform - SYNposium Presentation-2](https://github.com/user-attachments/assets/99522799-ec5c-4775-acdf-fe419152bd47)
 
 ## Features
 
