@@ -87,7 +87,8 @@ This project is licensed under the Creative Commons Attribution-NonCommercial-Sh
 - Bootstrap Icons for the comprehensive icon set
 - The Flask framework and its extensions for web application development
 - SQLAlchemy and Flask-Migrate for database management
-- The open source community for inspiration and tools that made this project possible 
+- Poster background Designed by Freepik by Mateus Andre
+- The open source community for inspiration and tools that made this project possible
 
 ## Contact
 
